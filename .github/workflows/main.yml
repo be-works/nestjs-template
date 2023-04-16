@@ -1,0 +1,36 @@
+name: build
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Extract branch name
+        run: echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
+        id: extract_branch
+
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{secrets.IP}}
+          username: ${{secrets.username}}
+          password: ${{secrets.password}}
+          port: 22
+          script: |
+            cd syntech-backend
+            git fetch --all
+            git checkout ${{ steps.extract_branch.outputs.branch }}
+            git pull --rebase origin ${{ steps.extract_branch.outputs.branch }}
+            npm i --legacy-peer-deps && npm run build
+            pm2 restart syntech-be
+
+      - name: Done
+        run: echo Done.
