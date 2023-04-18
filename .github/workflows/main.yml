@@ -7,6 +7,7 @@ on:
     branches: [develop]
 
 jobs:
+
   build:
     runs-on: ubuntu-20.04
     steps:
@@ -29,6 +30,8 @@ jobs:
             git fetch --all
             git checkout ${{ steps.extract_branch.outputs.branch }}
             git pull --rebase origin ${{ steps.extract_branch.outputs.branch }}
+            cp .exam.env .env
+            sed -i 's/TEST_VAR=/TEST_VAR=${secrets.usernam}/g' .env
             npm i --legacy-peer-deps && npm run build
             pm2 restart syntech-be
 
